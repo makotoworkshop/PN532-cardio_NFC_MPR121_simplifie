@@ -2,7 +2,7 @@
 
 PN532 eAmusement/Aime/Nesica/BANAPASSPORT NFC USB HID card reader (cardio) with optional integrated keypad, Spiceapi integration. Supports ISO14443 and FeliCa.
 
-This is a mod of my PN5180-cardio project made to work with a PN532 module instead, over its I2C communication mode.
+This is a mod of my PN5180-cardio project made to work with a PN532 module instead, over its IC communication mode.
 
 # Acknowledgments
 
