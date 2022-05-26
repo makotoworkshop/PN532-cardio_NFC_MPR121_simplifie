@@ -10,12 +10,6 @@ This work is based on zyp's cardio (obviously).
 
 PN532 code is taken from [elechouse](https://github.com/elechouse/PN532) library.
 
-HID layer code is inspired from Matthew Heironimus' <Joystick.h> library.
-
-The keypad code uses the Keypad library by Mark Stanley and Alexander Brevig.
-
-Spiceapi version provided by [goat](https://github.com/goaaats) (thanks! :))
-
 # Supported devices
 
 USBHID code has been tested on Arduino Due, Leonardo, and Pro Micro.
