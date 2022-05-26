@@ -25,44 +25,6 @@ It should support any SPI-capable arduino without native USB HID capabilities bu
 `SPICEAPI_WRAPPER_BUFFER_SIZE` and `SPICEAPI_WRAPPER_BUFFER_SIZE_STR` parameters in `PN532-cardio.ino`.
 
 # Pinout
+For more details about Électronics see : http://burogu.makotoworkshop.org/index.php?post/2022/05/26/sdvx7
 
 **Note:** The PN532 has to be put in I2C mode (usually there are two dipswitches, the first one has to be set to ON and the second to OFF).
-
-
-# Keypad Pinout
-
-Connect the row pins to gpio 1 6 5 3.
-Connect the column pins to gpio 2 0 4.
-
-If you want to use the keypad, you have to set `#define WITH_KEYPAD 1` in PN532-cardio.ino in the top header options.
-
-If you're using the USBHID mode, then you should also install Keypad library by Stanley and Brevig (can be installed directly from Arduino IDE library manager).
-
-In SPICEAPI mode, it will work through Spiceapi instead.
-
-# How to use
-
-## USBHID
-
-- Download zip
-- (optional) set `#define WITH_KEYPAD 1` (in PN532-cardio.ino user configurable options) and install Keypad library by Stanley and Brevig directly from Arduino IDE
-- flash the firmware
-- unplug the arduino
-- connect the PN532 and keypad to the Arduino.
-
-Congratulations, your device should work just like a real cardio, use 
-your favorite tools instructions to play (e.g. `spicetools -cardio`).
-
-The keypad should be recognized as an additional USB device.
-
-## SPICEAPI
-
-- Download zip
-- set `#define WITH_SPICEAPI 1` (in PN532-cardio.ino user configurable options)
-- set `SPICEAPI_PASS` accordingly (in PN532-cardio.ino user configurable options)
-- (optional) set `#define WITH_KEYPAD 1` (in PN532-cardio.ino user configurable options) and install Keypad library by Stanley and Brevig directly from Arduino IDE
-- flash the firmware
-- unplug the arduino
-- connect the PN532 and keypad to the Arduino.
-
-Congratulations, your device should work, run `spicetools -apiserial COMx` (with `x` your arduino COM port number).
