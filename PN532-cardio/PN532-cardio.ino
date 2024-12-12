@@ -121,10 +121,37 @@ void readcards() {
   // When one is found, some basic information such as IDm, PMm, and System Code are retrieved.
   ret = nfc.felica_Polling(systemCode, requestCode, idm, pmm, &systemCodeResponse, 40); // à changer pour détecter +/- vite ce type de carte (ori = 500)
 
+  if (ret == 1) {
+
+/*   Found a FeliCa card!
+     IDm:  02 2E 5C E2 98 4B 7E AB
+     PMm:  00 F1 00 05 08 01 43 00
+     System Code: 66C5               */
+      
+      Serial.println("Found a FeliCa card!");
+      Serial.print("  IDm: ");
+      nfc.PrintHex(idm, 8);
+      Serial.print("  PMm: ");
+      nfc.PrintHex(pmm, 8);
+      Serial.print("  System Code: ");
+      Serial.print(systemCodeResponse, HEX);
+      Serial.print("\n");
+      Serial.println(""); 
+      Cardio.setUID(2, idm);
+      Cardio.sendState();      
+      lastReport = millis();
+      cardBusy = 3000;
+      uidLength = 0;
+      return;
+    }
+ 
    // check for ISO14443 card
 
   if (nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength))
   {
+/*    Found a ISO14443 card!
+      UID Length: 4 bytes
+      UID Value:  0x23 0x42 0x82 0xBC 0x45 0x850 0x86 0x73      */
     Serial.println("Found a card!");
     Serial.print("UID Length: ");Serial.print(uidLength, DEC);Serial.println(" bytes");
     Serial.print("UID Value: ");  
@@ -133,7 +160,7 @@ void readcards() {
       Serial.print(" 0x");Serial.print(uid[i], HEX); 
     }
     Serial.println(""); 
-
+    Serial.println(""); 
     Cardio.setUID(1, hid_data);
     Cardio.sendState();
 
