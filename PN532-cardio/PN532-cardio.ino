@@ -11,6 +11,7 @@ Adafruit_MPR121 cap = Adafruit_MPR121();
 // so we know when buttons are 'released'
 uint16_t lasttouched = 0;
 uint16_t currtouched = 0;
+bool cardPresent = false;
 
 /* Software Debounce Interval */
 #define DEBOUNCE 10
@@ -24,7 +25,7 @@ PN532_I2C pn532i2c(Wire);
 PN532 nfc(pn532i2c);
 
 #include "src/Cardio.h"
-Cardio_ Cardio;
+  Cardio_ Cardio;
  
 void setup() {
   Serial.begin(115200);
@@ -73,30 +74,35 @@ unsigned long lastReport = 0;
 uint16_t cardBusy = 0;
 
 void loop() {
-  checkAllKeyEvents2();
-  readcards();
-//  pavenum();
+  checkAllKeyEvents2();  // fonction simplifée de pavenum… bug souvent en répétant le caractére cccccccccc
+  // si ça se produit c'est la sensibilité des touches qui est en cause, voir pour modifier les deux threshold de la lib MPR121
+  //  pavenum();
+  readcards(); // Met à jour l'état de la carte (cardPresent = true ou false)
+
+  if (cardPresent) {
+    checkAllKeyEvents2(); // Le clavier ne fonctionne QUE si une carte est active
+  } else {
+    // Optionnel de sécurité : s'assurer que les variables du tactile se réinitialisent
+    lasttouched = cap.touched(); 
+  }
 }
 
 void checkAllKeyEvents2() {
-  static uint16_t prev;
-  uint16_t curr = cap.touched();
+  currtouched = cap.touched();
   
-  if (curr == prev) return;
-  
-  for (int i = 0; i < 12; i++) {
-    if ((curr >> i)&1)
-    {
-        Keyboard.press(asciiKey[i]);
-        keyTimer[i] = millis();
-    //    Serial.println(keyTimer[i]);         Serial.println(DEBOUNCE);
+  for (uint8_t i = 0; i < 12; i++) {
+    // Si la touche est pressée maintenant MAIS ne l'était pas avant (Front montant)
+    if ((currtouched & _BV(i)) && !(lasttouched & _BV(i))) {
+      Keyboard.press(asciiKey[i]);
+      delay(10); // Petit délai anti-rebond matériel optionnel
     }
-    else if(millis() - keyTimer[i] > DEBOUNCE)
-    {
-        Keyboard.release(asciiKey[i]);
+    // Si la touche n'est plus pressée MAIS l'était avant (Front descendant)
+    else if (!(currtouched & _BV(i)) && (lasttouched & _BV(i))) {
+      Keyboard.release(asciiKey[i]);
     }
   }
-  prev = curr;
+  
+  lasttouched = currtouched;
 }
 
 void readcards() {
@@ -121,12 +127,12 @@ void readcards() {
   // When one is found, some basic information such as IDm, PMm, and System Code are retrieved.
   ret = nfc.felica_Polling(systemCode, requestCode, idm, pmm, &systemCodeResponse, 40); // à changer pour détecter +/- vite ce type de carte (ori = 500)
 
-  if (ret == 1) {
+    if (ret == 1) {
 
 /*   Found a FeliCa card!
-     IDm:  02 2E 5C E2 98 4B 7E AB
-     PMm:  00 F1 00 05 08 01 43 00
-     System Code: 66C5               */
+     IDm:  01 2E 5C E2 71 4B 7E AC
+     PMm:  00 F1 00 00 00 01 43 00
+     System Code: 88B4               */
       
       Serial.println("Found a FeliCa card!");
       Serial.print("  IDm: ");
@@ -141,18 +147,20 @@ void readcards() {
       Cardio.sendState();      
       lastReport = millis();
       cardBusy = 3000;
+      cardPresent = true; // <--- Carte présente
       uidLength = 0;
       return;
     }
- 
+
    // check for ISO14443 card
 
   if (nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength))
   {
 /*    Found a ISO14443 card!
       UID Length: 4 bytes
-      UID Value:  0x23 0x42 0x82 0xBC 0x45 0x850 0x86 0x73      */
-    Serial.println("Found a card!");
+      UID Value:  0x33 0x45 0x89 0xC 0x0 0x0 0x0 0x0      */
+    
+    Serial.println("Found a ISO14443 card!");
     Serial.print("UID Length: ");Serial.print(uidLength, DEC);Serial.println(" bytes");
     Serial.print("UID Value: ");  
     for (int i=0; i<8; i++) {
@@ -166,9 +174,15 @@ void readcards() {
 
     lastReport = millis();
     cardBusy = 5000;
+    cardPresent = true; // <--- Carte présente
     return;
   }
-  // no card detected
+  // Aucune carte détectée
+  // Si on veut désactiver immédiatement les touches quand la carte s'éloigne :
+  cardPresent = false; 
+  // Optionnel : s'assurer qu'on relâche tout si la carte part
+  Keyboard.releaseAll();
+  
   lastReport = millis();
   cardBusy = 200;
 
